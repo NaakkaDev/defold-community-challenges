@@ -1,0 +1,78 @@
+local rendy = require("rendy.rendy")
+
+local const = require("main.const")
+
+local FWD = go.PLAYBACK_ONCE_FORWARD
+
+local function animate_logo()
+	local target_pos = vmath.vector3(231, -17, 0)
+	go.animate("/defold_logo", "euler.z", FWD, 360, go.EASING_LINEAR, 30)
+	go.animate("/defold_logo", "position", FWD, target_pos, go.EASING_LINEAR, 30)
+end
+
+local function explode()
+	go.set("/asteroid_explosive#sprite", "blink_trigger", vmath.vector4(1.0))
+	go.animate("/asteroid_explosive", "scale", FWD, 1.2, go.EASING_INQUAD, 0.2, 0, function(self, url, property)
+		-- Enable the "blinding light" sprite and animate its scale upwards
+		msg.post("/light", "enable")
+		go.animate("/light#sprite", "scale", FWD, 100, go.EASING_LINEAR, 0.25, 0.1, function(self, url, property)
+			-- Disable the light
+			msg.post("/light", "disable")
+			-- Remove the explosive since it will go boom now
+			go.set("/asteroid_explosive#sprite", "blink_trigger", vmath.vector4(0.0))
+			msg.post("/asteroid_explosive#sprite", "disable")
+			-- BLOW UP
+			particlefx.play("/asteroid_explosive#directional_explosion", function(self, id, emitter, state)
+				-- Show the gui now that the explosion particles are gone
+				if emitter == const.explosion and state == 0 then
+					msg.post("/go#monarch", "enable")
+				end
+			end)
+			-- Very mild camera shake when the imaginary shockwave hits the camera satellite
+			rendy.shake(const.main_cam, 5, 1, 0.75)
+
+			-- Give the asteroid a new target position so it
+			-- looks like the explosion did something to its trajectory
+			go.animate("/asteroid", "position", go.PLAYBACK_ONCE_FORWARD, vmath.vector3(135, -64, 0), go.EASING_LINEAR,
+				60)
+
+			-- SPACEEEEEEEEEEEEE
+			animate_logo()
+		end)
+	end)
+end
+
+local function init_explosion(self)
+	-- Hide the gui
+	msg.post("/go#monarch", "disable")
+	-- Show the explosive sprite
+	msg.post("/asteroid_explosive#sprite", "enable")
+	-- Set the initial explosive scale
+	go.set("/asteroid_explosive", "scale", vmath.vector3(1.0))
+	-- Set the light sprite scale back to 1
+	go.set("/light#sprite", "scale", vmath.vector3(1.0))
+	-- Set the initial position of the asteroid
+	go.set_position(self.asteroid_pos, "/asteroid")
+	-- Animate the asteroid moving "forward"
+	go.animate("/asteroid", "position", go.PLAYBACK_ONCE_FORWARD, vmath.vector3(0), go.EASING_LINEAR, 60)
+
+	-- Blow up soon
+	timer.delay(4, false, function(self, handle, time_elapsed)
+		explode()
+	end)
+end
+
+function init(self)
+	msg.post("/light#sprite", "disable")
+
+	-- Save the initial asteroid position for reset purposes
+	self.asteroid_pos = go.get_position("/asteroid")
+
+	init_explosion(self)
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == const.start_explosion then
+		init_explosion(self)
+	end
+end

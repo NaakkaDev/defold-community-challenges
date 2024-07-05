@@ -1,0 +1,114 @@
+local monarch = require("monarch.monarch")
+local rendy = require("rendy.rendy")
+local const = require("main.const")
+
+local FWD = go.PLAYBACK_ONCE_FORWARD
+local L = "/defold_logo"
+
+-- Drop the defold logo and bounce it towards the camera
+local function drop_logo()
+	go.animate(L, "position.y", FWD, 300, go.EASING_LINEAR, 0.5, 0,
+		function(self, url, property)
+			go.animate(L, "position.y", FWD, 295, go.EASING_OUTQUAD, 0.1)
+			go.animate(L, "scale", FWD, vmath.vector3(1.0, 0.4, 0.0), go.EASING_OUTQUAD, 0.1, 0,
+				function()
+					go.animate(L, "position.y", FWD, 300, go.EASING_INQUAD, 0.1)
+					go.animate(L, "scale", FWD, vmath.vector3(0.5), go.EASING_INQUAD, 0.1, 0,
+						function()
+							go.animate(L, "position.y", FWD, 285, go.EASING_LINEAR, 0.2)
+							go.animate(L, "scale", FWD, vmath.vector3(2.0), go.EASING_LINEAR, 0.2)
+						end
+					)
+				end
+			)
+		end
+	)
+end
+
+
+local function explosion()
+	-- Use the barrel as the explosions white flash by scaling
+	-- it up just as the explosion happens
+	go.animate("/barrel#sprite", "scale", go.PLAYBACK_ONCE_FORWARD, vmath.vector3(3.0), go.EASING_INOUTELASTIC, 0.2, 0,
+		function(self, url, property)
+			-- Not too strong screen shake
+			rendy.shake(const.main_cam, 15, 3, 0.25)
+			-- Hide the sprite
+			msg.post("/barrel#sprite", "disable")
+			-- Play the particle
+			particlefx.play("/barrel#barrel_explosion", function(self, id, emitter, state)
+				if emitter == const.fire and state == 0 then
+					-- Hide the barrel label
+					msg.post("/barrel#label", "disable")
+					-- Drop the defold logo that was clearly hiding in the barrel ;)
+					drop_logo()
+				end
+				if emitter == const.smoke and state == 0 then
+					-- Show gui since the last (smoke) emitter has stopped
+					msg.post("/go#monarch", "enable")
+				end
+			end)
+			-- Reset the blink trigger and change the sprite shortly after the explosing
+			timer.delay(0.5, false, function(self, handle, time_elapsed)
+				go.set("/barrel#sprite", "blink_trigger", vmath.vector4(0.0))
+			end)
+		end
+	)
+end
+
+local function start_blinking()
+	-- Set blink delay
+	local blink_delay = 1.0
+	timer.delay(blink_delay / 3, true, function(self, outer_handle, time_elapsed)
+		-- Tell the shader to make the barrel white
+		go.set("/barrel#sprite", "blink_trigger", vmath.vector4(1.0))
+		-- Delay a bit before turning it back to original colors
+		timer.delay(blink_delay / 5, false, function()
+			-- Blink delay is so low that it's time to blow up!
+			if blink_delay <= 0.0 then
+				-- Cancel the looping timer
+				timer.cancel(outer_handle)
+				-- BOOM
+				explosion()
+				-- Leave this place
+				return
+			end
+			-- Reduce the blink delay a bit
+			blink_delay = blink_delay - 0.5
+			-- Tell the shader to turn off the white
+			go.set("/barrel#sprite", "blink_trigger", vmath.vector4(0.0))
+		end)
+	end)
+end
+
+local function init_explosion(self)
+	-- Reset the defold logo properties
+	go.set_position(self.logo_pos, L)
+	go.set_scale(self.logo_scale, L)
+
+	-- Hide the gui
+	msg.post("/go#monarch", "disable")
+	-- Show the barrel label
+	msg.post("/barrel#label", "enable")
+	-- Show the sprite
+	msg.post("/barrel#sprite", "enable")
+	-- Set the sprite scale back to 1
+	go.set("/barrel#sprite", "scale", vmath.vector3(1.0))
+
+	start_blinking()
+end
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+
+	self.logo_pos = go.get_position(L)
+	self.logo_scale = go.get_scale(L)
+
+	init_explosion(self)
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == const.start_explosion then
+		init_explosion(self)
+	end
+end

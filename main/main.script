@@ -1,0 +1,14 @@
+local monarch = require("monarch.monarch")
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+	msg.post("@render:", "resize", { width = 540, height = 960 })
+
+	msg.post("#", "init_monarch")
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("init_monarch") then
+		monarch.show("menu")
+	end
+end
