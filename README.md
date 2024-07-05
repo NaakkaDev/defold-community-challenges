@@ -2,7 +2,7 @@
 
 This project was created from the "mobile" project template. All my community challenge creations will live here.
 
-**Try it out here:** <https://url> [ You might have to fullscreen your browser; See note below. ]
+**Try it out here:** <https://temeez.github.io/defold-community-challenges/>
 
 **Note**: I like pixel art so this project contains a customized render_script to keep the resolution "pixel perfect". That means 270x480 (x1), 540x960 (x2) and so on.
 
