@@ -35,6 +35,7 @@ local function explosion()
 			rendy.shake(const.main_cam, 15, 3, 0.25)
 			-- Hide the sprite
 			msg.post("/barrel#sprite", "disable")
+			msg.post("/barrel#shadow", "disable")
 			-- Play the particle
 			particlefx.play("/barrel#barrel_explosion", function(self, id, emitter, state)
 				if emitter == const.fire and state == 0 then
@@ -92,6 +93,7 @@ local function init_explosion(self)
 	msg.post("/barrel#label", "enable")
 	-- Show the sprite
 	msg.post("/barrel#sprite", "enable")
+	msg.post("/barrel#shadow", "enable")
 	-- Set the sprite scale back to 1
 	go.set("/barrel#sprite", "scale", vmath.vector3(1.0))
 
