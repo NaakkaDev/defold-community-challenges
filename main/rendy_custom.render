@@ -1,1 +1,5 @@
 script: "/main/rendy_custom.render_script"
+render_resources {
+  name: "rain"
+  path: "/main/postprocess/effects/rain/rain.material"
+}

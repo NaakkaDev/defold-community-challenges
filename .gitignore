@@ -12,3 +12,4 @@ builtins
 /.vscode
 /.defold
 /debugger
+/.editor_settings

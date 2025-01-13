@@ -2,7 +2,7 @@ local monarch = require("monarch.monarch")
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
-	msg.post("@render:", "resize", { width = 540, height = 960 })
+	-- msg.post("@render:", "resize", { width = 540, height = 960 })
 
 	msg.post("#", "init_monarch")
 end

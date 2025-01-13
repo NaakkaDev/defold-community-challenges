@@ -29,6 +29,7 @@
 --------------------------------------------------------------------------------
 
 local rendy = require "rendy.rendy"
+local lumiere = require("lumiere.lumiere")
 
 --------------------------------------------------------------------------------
 -- Constants
@@ -71,6 +72,10 @@ local predicates =
 	debug_text =
 	{
 		tags = { hash("debug_text") },
+		object = nil
+	},
+	quad = {
+		tags = { hash("quad") },
 		object = nil
 	},
 	-- Declare custom predicates.
@@ -232,15 +237,20 @@ end
 
 -- Responds to the `set_view_projection` message, which is sent by each camera once per frame.
 local function set_view_projection_callback(camera_url, view_transform)
-	for _, camera in pairs(rendy.cameras) do
+	for camera_id, camera in pairs(rendy.cameras) do
 		if camera_url == camera.camera_url then
 			camera.view_transform = view_transform
 			-- Custom
-			apply_resize_mode_center_pixel_perfect(camera)
+			if camera_id == hash("/ppe_camera") then
+				apply_resize_mode_expand(camera)
+			else
+				apply_resize_mode_center_pixel_perfect(camera)
+			end
+
 			-- if camera.resize_mode_center then
 			-- 	apply_resize_mode_center(camera)
 			-- elseif camera.resize_mode_expand then
-			-- 	apply_resize_mode_expand(camera)
+			-- apply_resize_mode_expand(camera)
 			-- elseif camera.resize_mode_stretch then
 			-- 	apply_resize_mode_stretch(camera)
 			-- end
@@ -275,8 +285,27 @@ end
 --------------------------------------------------------------------------------
 -- Engine Functions
 --------------------------------------------------------------------------------
+local function create_render_target(name)
+	local color_params = {
+		format = render.FORMAT_RGBA,
+		width = render.get_window_width(),
+		height = render.get_window_height(),
+		min_filter = render.FILTER_LINEAR,
+		mag_filter = render.FILTER_LINEAR,
+		u_wrap = render.WRAP_CLAMP_TO_EDGE,
+		v_wrap = render.WRAP_CLAMP_TO_EDGE
+	}
+	return render.render_target(name, { [render.BUFFER_COLOR_BIT] = color_params })
+end
+
+local function create_render_targets(self)
+	self.normal_rt = create_render_target("normal")
+end
+
 
 function init(self)
+	lumiere.init()
+
 	-- Initialize Rendy variables.
 	rendy.display_width = sys.get_config_int("display.width")
 	rendy.display_height = sys.get_config_int("display.height")
@@ -310,9 +339,13 @@ function init(self)
 		[render.BUFFER_DEPTH_BIT] = 1,
 		[render.BUFFER_STENCIL_BIT] = 0
 	}
+
+	create_render_targets(self)
 end
 
-function update(self, dt)
+function update(self)
+	lumiere.update()
+
 	-- Enable writing to the depth and stencil buffers, and set the default blend function.
 	-- Writing to the color buffer is always enabled.
 	render.set_depth_mask(true)
@@ -328,6 +361,7 @@ function update(self, dt)
 		-- Only render this camera if it is active.
 		if camera.active then
 			activate_camera(camera)
+
 			-- First, render 3D objects.
 			-- Enable depth testing and facing culling to discard non-visible fragments.
 			-- Blending is not supported for 3D objects because Defold does not sort them from back to front, which is a requirement for proper blending.
@@ -337,15 +371,27 @@ function update(self, dt)
 			render.disable_state(render.STATE_CULL_FACE)
 			render.disable_state(render.STATE_DEPTH_TEST)
 			render.set_depth_mask(false)
-			-- Second, render 2D objects.
-			-- Disable depth testing because Defold sorts 2D objects by their z positions from back to front.
-			-- Enable blending to support partially transparent objects.
-			render.enable_state(render.STATE_BLEND)
-			render.draw(predicates.tile.object, { frustum = camera.frustum })
-			render.draw(predicates.particle.object, { frustum = camera.frustum })
-			render.disable_state(render.STATE_BLEND)
+
+			-- Only show post-process effects on ppe_camera
+			if camera_id == hash("/ppe_camera") then
+				lumiere.draw(function()
+					-- Second, render 2D objects.
+					-- Disable depth testing because Defold sorts 2D objects by their z positions from back to front.
+					-- Enable blending to support partially transparent objects.
+					render.enable_state(render.STATE_BLEND)
+					render.draw(predicates.tile.object, { frustum = camera.frustum })
+					render.draw(predicates.particle.object, { frustum = camera.frustum })
+					render.disable_state(render.STATE_BLEND)
+				end)
+			else
+				render.enable_state(render.STATE_BLEND)
+				render.draw(predicates.tile.object, { frustum = camera.frustum })
+				render.draw(predicates.particle.object, { frustum = camera.frustum })
+				render.disable_state(render.STATE_BLEND)
+			end
 		end
 	end
+
 	-- Render the GUI camera on top of all other cameras.
 	-- Disable depth testing because Defold sorts 2D objects by their z positions from back to front.
 	-- Enable blending to support partially transparent objects.
@@ -361,6 +407,8 @@ function update(self, dt)
 end
 
 function on_message(self, message_id, message, sender)
+	lumiere.on_message(message_id, message)
+
 	-- Sent once per frame by each camera.
 	if message_id == message_set_view_projection then
 		set_view_projection_callback(sender, message.view)

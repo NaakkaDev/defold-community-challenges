@@ -8,7 +8,7 @@ function init(self)
     self.druid = druid.new(self)
 
     -- Monarch screen ids and btn node names
-    local btns = { "barrel", "asteroid", "explosion" }
+    local btns = { "barrel", "asteroid", "explosion", "postprocess" }
     for _, value in pairs(btns) do
         self.druid:new_button("btn_" .. value, function(self, button, args)
             -- Show this screen on click

@@ -127,7 +127,7 @@ collection_template = function(gui_script, name)
     return [[name: "]] .. name .. [["
 scale_along_z: 0
 embedded_instances {
-  id: "go"
+  id: "gui"
   data: "components {\n"
   "  id: \"monarch\"\n"
   "  component: \"]] .. gui_script .. [[\"\n"

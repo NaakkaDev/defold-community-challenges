@@ -1,0 +1,133 @@
+script: "/main/postprocess/postprocess.gui_script"
+fonts {
+  name: "default"
+  font: "/builtins/fonts/default.font"
+}
+nodes {
+  position {
+    x: 47.0
+    y: 445.0
+  }
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  color {
+    x: 0.102
+    y: 0.302
+    z: 0.302
+  }
+  type: TYPE_BOX
+  id: "btn_rain"
+  inherit_alpha: true
+  size_mode: SIZE_MODE_AUTO
+}
+nodes {
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  type: TYPE_TEXT
+  text: "Rain"
+  font: "default"
+  id: "text"
+  parent: "btn_rain"
+  inherit_alpha: true
+}
+nodes {
+  position {
+    x: 223.0
+    y: 445.0
+  }
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  color {
+    x: 0.102
+    y: 0.302
+    z: 0.302
+  }
+  type: TYPE_BOX
+  id: "btn_rain2"
+  inherit_alpha: true
+  size_mode: SIZE_MODE_AUTO
+}
+nodes {
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  type: TYPE_TEXT
+  text: "Rain + \n"
+  "Grain"
+  font: "default"
+  id: "text1"
+  line_break: true
+  parent: "btn_rain2"
+  inherit_alpha: true
+}
+nodes {
+  position {
+    x: 135.0
+    y: 445.0
+  }
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  color {
+    x: 0.102
+    y: 0.302
+    z: 0.302
+  }
+  type: TYPE_BOX
+  id: "btn_none"
+  inherit_alpha: true
+  size_mode: SIZE_MODE_AUTO
+}
+nodes {
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  type: TYPE_TEXT
+  text: "None"
+  font: "default"
+  id: "text2"
+  parent: "btn_none"
+  inherit_alpha: true
+}
+nodes {
+  position {
+    x: 135.0
+    y: 29.0
+  }
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  color {
+    x: 0.102
+    y: 0.302
+    z: 0.302
+  }
+  type: TYPE_BOX
+  id: "btn_back"
+  inherit_alpha: true
+  size_mode: SIZE_MODE_AUTO
+}
+nodes {
+  size {
+    x: 80.0
+    y: 40.0
+  }
+  type: TYPE_TEXT
+  text: "Back"
+  font: "default"
+  id: "text3"
+  parent: "btn_back"
+  inherit_alpha: true
+}
+material: "/builtins/materials/gui.material"
+adjust_reference: ADJUST_REFERENCE_PARENT
