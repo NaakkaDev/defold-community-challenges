@@ -32,7 +32,7 @@ instances {
 }
 instances {
   id: "grain"
-  prototype: "/.defold/assets/lumiere/effects/grain/grain.go"
+  prototype: "/lumiere/effects/grain/grain.go"
 }
 instances {
   id: "lumiere"
